@@ -79,6 +79,8 @@ Device *PicDevice::load(char *name) {
 		return new Pic12f6xxDevice(name);
 	} else if(!strcmp(backend, "Pic16Device")) {
 		return new Pic16Device(name);
+	} else if(!strcmp(backend, "Pic1xf1xxxDevice")) {
+		return new Pic1xf1xxxDevice(name);
 	} else if(!strcmp(backend, "Pic18f2xx0Device")) {
 		return new Pic18f2xx0Device(name);
 	} else if(!strcmp(backend, "Pic18Device")) {

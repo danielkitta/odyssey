@@ -24,6 +24,7 @@
 #include "DataBuffer.h"
 #include "Device.h"
 #include "IO.h"
+#include <vector>
 
 /** \file */
 
@@ -507,6 +508,144 @@ public:
 
 protected:
 	void disable_codeprotect(void);
+};
+
+
+/** An implementation of the Device class which supports the enhanced mid-range
+ * 14-bit devices labeled PIC12(L)F1xxx and PIC16(L)F1xxx.
+ * Unlike the older 14-bit devices, these have two configuration words.
+ */
+class Pic1xf1xxxDevice : public PicDevice {
+public:
+	enum {
+		CONFIG_MEM_START = 0x8000,
+		DEVICE_ID_OFFSET = 6,
+		CONFIG_WORD_OFFSET = 7
+	};
+
+	/** Create a new instance and read in in the configuration for the PIC
+	 * device. This constructor is called from Device::load() when the device
+	 * name begins with the string "PIC". This function will open the PIC
+	 * device configuration file "pic.conf" and read the configuration for
+	 * the device specified.
+	 * \param name The name of the PIC device.
+	 * \throws runtime_error Contains a description of the error.
+	 */
+	explicit Pic1xf1xxxDevice(char *name);
+
+	/** Destructor */
+	~Pic1xf1xxxDevice();
+
+	virtual void erase();
+	virtual void program(DataBuffer& buf);
+	virtual void read(DataBuffer& buf, bool verify=false);
+
+protected:
+	/** Bulk erase the program and data memory of a flash device.
+	 * \pre The device has flash memory.
+	 * \pre Code protection on the device is verified to be completely off.
+	 * \pre The device is turned completely off.
+	 * \post The device is turned completely off.
+	 * \throws runtime_error Contains a description of the error.
+	 */
+	virtual void bulk_erase();
+
+	/** Program the entire contents of program memory to the PIC device.
+	 * \param buf A DataBuffer containing the data to program.
+	 * \pre The PIC should have it's program counter set to the beginning of
+	 *      program memory.
+	 * \post The program counter is pointing to the address immediatly after
+	 *       the last program memory address.
+	 * \throws runtime_error Contains a description of the error along with
+	 *         the address at which the error occurred.
+	 */
+	virtual void write_program_memory(DataBuffer& buf);
+
+	/** Read the entire contents of program memory from the PIC device.
+	 * \param buf A DataBuffer in which to store the read data.
+	 * \param verify If this flag is true, don't store the data in the
+	 *        DataBuffer but verify the contents of it.
+	 * \pre The PIC should have it's program counter set to the beginning of
+	 *      program memory.
+	 * \post The program counter is pointing to the address immediatly after
+	 *       the last program memory address.
+	 * \throws runtime_error Contains a description of the error along with
+	 *         the address at which the error occurred.
+	 */
+	virtual void read_program_memory(DataBuffer& buf, bool verify=false);
+
+	/** Program the ID words to the PIC device.
+	 * \param buf A DataBuffer containing the data to program.
+	 * \param base The offset within the data buffer to start retrieving data.
+	 * \pre The PIC should have it's program counter set to the location of
+	 *      the ID words.
+	 * \post The program counter is pointing to the address immediatly after
+	 *       the last ID word.
+	 * \throws runtime_error Contains a description of the error along with
+	 *         the address at which the error occurred.
+	 */
+	virtual void write_id_memory(DataBuffer& buf);
+
+	/** Read the ID words from the PIC device.
+	 * \param buf A DataBuffer in which to store the read data.
+	 * \param base The offset within the data buffer to start storing data.
+	 * \param verify If this flag is true, don't store the data in the
+	 *        DataBuffer but verify the contents of it.
+	 * \pre The PIC should have it's program counter set to the location of
+	 *      the ID words.
+	 * \post The program counter is pointing to the address immediatly after
+	 *       the last ID word.
+	 * \throws runtime_error Contains a description of the error along with
+	 *         the address at which the error occurred.
+	 */
+	virtual void read_id_memory(DataBuffer& buf, bool verify);
+
+	/** Writes the configuration words
+	 * \param buf The DataBuffer from which data is read.
+	 * \param addr The address of the configuration words in the PIC address
+	 *        space.
+	 * \param verify A boolean value indicating if the written data should be
+	 *        read back and verified.
+	 * \post The \c progress_count is incremented by the number of
+	 *       configuration words written. If \c verify is true then
+	 *       \c progress_count will have been incremented by two times the
+	 *       number of words written; once for the write and once for the
+	 *       verify.
+	 * \throws runtime_error Contains a description of the error along with
+	 *         the configuration word number where the error occurred.
+	 */
+	virtual void write_config_memory(DataBuffer& buf);
+
+	/** Reads a portion of the PIC configuration memory. This is basically the
+	 * same as \c read_memory except there is some masking of the data.
+	 * \param buf The DataBuffer to store the read data. On a verify, this
+	 *        data is compared with the data on the PIC.
+	 * \param addr The address in the PIC's memory to begin the read.
+	 * \param len The number of 16-bit words to read into the DataBuffer.
+	 * \param verify Boolean flag which indicates a verify operation against
+	 *        \c buf.
+	 * \post The \c progress_count is incremented by the number of
+	 *       configuration words read/verified.
+	 * \throws runtime_error Contains a description of the error along with
+	 *         the configuration word number where the error occurred.
+	 */
+	virtual void read_config_memory(DataBuffer& buf, bool verify=true);
+
+	/** Applies up to \c program_count programming cycles to the PIC device
+	 * and then applies the appropriate number of overprogramming cycles.
+	 * This algorithm is probably used for every type of PIC in existance.
+	 * \param data The data value to program into memory.
+	 * \pre The PIC program counter should be pointing to the location in
+	 *      memory that will be programmed.
+	 * \returns A boolean value indicating if the programming was successful.
+	 */
+	virtual bool program_one_location(uint32_t data, uint32_t mask);
+
+	virtual uint32_t read_deviceid();
+
+/* Protected data: */
+	/** Bitmask for valid bits in the configuration word. */
+	std::vector<unsigned int> config_masks;
 };
 
 
