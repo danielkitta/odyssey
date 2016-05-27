@@ -180,7 +180,7 @@ void PicDevice::set_program_mode(void) {
 
 
 bool PicDevice::check(void) {
-	uint32_t devid;
+	UIntPair devid (0, 0);
 
 	if(! (this->flags & PIC_HAS_DEVICEID)) {
 		/* Device doesn't have a device ID to check */
@@ -200,28 +200,25 @@ bool PicDevice::check(void) {
 		throw;
 	}
 
-	if((devid & this->deviceidmask) == (this->deviceid & this->deviceidmask)) {
-		/* Keep the chip rev in case it's needed later */
-		this->deviceid = devid;
-		printf("Chip Rev: 0x%lx\n", (unsigned long)
-		  (devid & ~this->deviceidmask));
+	if((devid.first & deviceidmask) == (deviceid & deviceidmask)) {
+		deviceid = devid.first;
+		printf("Chip Rev: 0x%x\n", devid.second);
 		return true;
 	}
 
 	/* XXX: there's no way to pass back an error string without using
 	 * exceptions! */
 	THROW_ERROR(runtime_error,
-	  "Device ID 0x%lx is wrong (expected 0x%lx, mask 0x%lx)",
-	  (unsigned long)devid, (unsigned long)this->deviceid,
-	  (unsigned long)this->deviceidmask);
+	  "Device ID 0x%x is wrong (expected 0x%x, mask 0x%x)",
+	  devid.first, deviceid, deviceidmask);
 	return false;
 }
 
 
-uint32_t PicDevice::read_deviceid(void) {
+UIntPair PicDevice::read_deviceid() {
 	fprintf(stderr, "Warning: read_deviceid is not implemented for this device.\n");
 	/* Fake it out. */
-	return (this->deviceid & this->deviceidmask);
+	return UIntPair(deviceid & deviceidmask, 0);
 }
 
 

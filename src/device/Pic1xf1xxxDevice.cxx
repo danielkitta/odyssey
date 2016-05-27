@@ -296,15 +296,19 @@ bool Pic1xf1xxxDevice::program_one_location(uint32_t data, uint32_t mask) {
 }
 
 
-uint32_t Pic1xf1xxxDevice::read_deviceid() {
+UIntPair Pic1xf1xxxDevice::read_deviceid() {
 	/* Enter config memory space. */
-	this->write_command(COMMAND_LOAD_CONFIG);
-	this->io->shift_bits_out(0x7ffe, 16);	/* Dummy write of all 1's */
-	this->io->usleep(1);
+	write_command(COMMAND_LOAD_CONFIG);
+	io->shift_bits_out(0x7ffe, 16);	/* Dummy write of all 1's */
+	io->usleep(1);
 
 	/* Advance to the address of the device ID */
-	for(int i=0; i < DEVICE_ID_OFFSET; i++)
-		this->write_command(COMMAND_INC_ADDRESS);
+	for(int i=0; i < REVISION_ID_OFFSET; i++)
+		write_command(COMMAND_INC_ADDRESS);
 
-	return read_prog_data();
+	const uint32_t revid = read_prog_data();
+	write_command(COMMAND_INC_ADDRESS);
+	const uint32_t devid = read_prog_data();
+
+	return UIntPair(devid, revid);
 }

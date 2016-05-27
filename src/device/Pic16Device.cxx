@@ -540,9 +540,7 @@ uint32_t Pic16Device::read_ee_data(void) {
 }
 
 
-uint32_t Pic16Device::read_deviceid(void) {
-	uint32_t devid;
-
+UIntPair Pic16Device::read_deviceid() {
 	/* Enter config memory space. The device ID is at address 0x2006 */
 	this->write_command(COMMAND_LOAD_CONFIG);
 	this->io->shift_bits_out(0x7ffe, 16);	/* Dummy write of all 1's */
@@ -552,6 +550,7 @@ uint32_t Pic16Device::read_deviceid(void) {
 	for(int i=0; i < 6; i++)
 		this->write_command(COMMAND_INC_ADDRESS);
 
-	devid = read_prog_data();
-	return devid;
+	const uint32_t devid = read_prog_data();
+
+	return UIntPair(devid & deviceidmask, devid & ~deviceidmask);
 }

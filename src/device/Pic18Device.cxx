@@ -60,7 +60,7 @@ Pic18Device::~Pic18Device() {
 }
 
 
-uint32_t Pic18Device::read_deviceid(void) {
+UIntPair Pic18Device::read_deviceid() {
 	unsigned int d1, d2;
 
 	/* Read and check the device ID */
@@ -68,7 +68,9 @@ uint32_t Pic18Device::read_deviceid(void) {
 	d1 = write_command_read_data(COMMAND_TABLE_READ_POSTINC);
 	d2 = write_command_read_data(COMMAND_TABLE_READ_POSTINC);
 
-	return d1 | d2<<8;
+	const unsigned int devid = d1 | (d2 << 8);
+
+	return UIntPair(devid & deviceidmask, devid & ~deviceidmask);
 }
 
 

@@ -32,7 +32,8 @@
 /** Global handle to the pic.conf configuration file. */
 extern ConfigFile *pic_config;
 
-typedef pair<int, int> IntPair;			/**< A pair of integers */
+typedef std::pair<int, int> IntPair;			/**< A pair of integers */
+typedef std::pair<unsigned int, unsigned int> UIntPair;	/**< A pair of unsigned integers */
 
 
 #define PIC_FEATURE_EEPROM 0x00000001	/**< PIC has a data EEPROM */
@@ -162,9 +163,9 @@ protected:
 	 * \pre The device has just been put into program mode.
 	 * \post The device is in an undetermined state. Programming may not
 	 *       be possible unless program mode is exited and re-entered.
-	 * \returns The value of the device ID word.
+	 * \returns The value of the device ID and chip revision words.
 	 */
-	virtual uint32_t read_deviceid(void);
+	virtual UIntPair read_deviceid();
 
 	/** Prepare the default value of the configuration registers.
 	 */
@@ -373,7 +374,7 @@ protected:
 	 */
 	uint32_t read_ee_data(void);
 
-	virtual uint32_t read_deviceid(void);
+	virtual UIntPair read_deviceid();
 
 /* Protected data: */
 	/** Bitmask for valid bits in the configuration word. */
@@ -519,7 +520,7 @@ class Pic1xf1xxxDevice : public PicDevice {
 public:
 	enum {
 		CONFIG_MEM_START = 0x8000,
-		DEVICE_ID_OFFSET = 6,
+		REVISION_ID_OFFSET = 5,
 		CONFIG_WORD_OFFSET = 7
 	};
 
@@ -641,7 +642,7 @@ protected:
 	 */
 	virtual bool program_one_location(uint32_t data, uint32_t mask);
 
-	virtual uint32_t read_deviceid();
+	virtual UIntPair read_deviceid();
 
 /* Protected data: */
 	/** Bitmask for valid bits in the configuration word. */
@@ -843,7 +844,7 @@ protected:
 	 */
 	virtual unsigned int write_command_read_data(unsigned int command);
 
-	virtual uint32_t read_deviceid(void);
+	virtual UIntPair read_deviceid();
 
 	virtual void set_config_default(DataBuffer& buf);
 
